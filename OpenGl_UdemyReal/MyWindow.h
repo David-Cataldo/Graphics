@@ -16,13 +16,19 @@ public:
 	GLfloat GetBufferWidth() { return bufferWidth; }
 	GLfloat GetBufferHeight() { return bufferHeight; }
 
+	GLfloat GetWidth() { return width; }
+	GLfloat GetHeight() { return height; }
+
 	bool GetShouldClose() { return glfwWindowShouldClose(mainWindow); }
 	
 	bool* GetKeys() { return keys; }
 	bool IsLeftClicking() { return glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT); }
 	GLfloat GetXChange();
 	GLfloat GetYChange();
+	GLfloat GetMouseX() { return lastX; }
+	GLfloat GetMouseY() { return lastY; }
 
+	void UpdateSize();
 	void SwapBuffers() { glfwSwapBuffers(mainWindow); }
 
 	~MyWindow();

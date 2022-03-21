@@ -153,6 +153,13 @@ void MyWindow::HandleMouse(GLFWwindow* window, double xPos, double yPos)
     theWindow->lastY = yPos;
 }
 
+void MyWindow::UpdateSize()
+{
+    glfwGetWindowSize(mainWindow, &width, &height);
+    glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
+    glViewport(0, 0, bufferWidth, bufferHeight);
+}
+
 MyWindow::~MyWindow()
 {
     // when our window object is destroyed, destroy the GLFW window and terminate GLFW

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
+
 class Mesh
 {
 public:
@@ -12,7 +14,7 @@ public:
 
 	~Mesh();
 
-private:
+protected:
 	GLuint VAO, VBO, IBO;
 	GLsizei indexCount;
 

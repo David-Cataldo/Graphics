@@ -2,6 +2,7 @@
 #include <string.h>
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -10,10 +11,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include "Mesh.h"
 #include "Shader.h"
 #include "MyWindow.h"
 #include "Camera.h"
+#include "Cube.h"
+
 
 const float toRadians = 3.14159265f / 180;
 
@@ -25,6 +31,7 @@ Camera camera;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
+GLuint fps = 0;
 
 // Vertex Shader
 static const char* vShader = "Shaders/shader.vert.txt";
@@ -66,16 +73,18 @@ void CreateShader()
 
 int main()
 {
-    mainWindow = MyWindow(2500, 1400);
+    mainWindow = MyWindow(1200, 1000);
     mainWindow.Initialize();
+    
+    Cube* cube1 = new Cube();
 
-    CreateObject();
+   // CreateObject();
     CreateShader();
 
     camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.2f);
 
     GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
-    glm::mat4 projection = glm::perspective(45.0f, mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
+    glm::mat4 projection;
 
     // loop until window closed
 
@@ -84,15 +93,19 @@ int main()
         GLfloat now = glfwGetTime();
         deltaTime = now - lastTime;
         lastTime = now;
+        fps = (int)(1 / deltaTime);
 
         // get and handle user input events
         glfwPollEvents();
+        mainWindow.UpdateSize();
+
+        projection = glm::perspective(45.0f, mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
 
         camera.KeyControl(mainWindow.GetKeys(), deltaTime);
         camera.MouseControl(mainWindow.GetXChange(), mainWindow.GetYChange(), mainWindow.IsLeftClicking());
 
         // clear window - background color
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shaderList[0].UseShader();
@@ -107,13 +120,16 @@ int main()
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
-        meshList[0]->RenderMesh();
+        //meshList[0]->RenderMesh();
+
+        cube1->RenderCube();
+
         
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 1.0f, -2.5f));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        meshList[1]->RenderMesh();
+        //meshList[1]->RenderMesh();
 
         glUseProgram(0);
 
