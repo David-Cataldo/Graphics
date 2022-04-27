@@ -1,21 +1,18 @@
 #pragma once
 
-#include <GL/glew.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <GLFW/glfw3.h>
-
 class Camera
 {
 public:
-	Camera(glm::vec3 startPosition = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 startUp = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat startYaw = -90.0f, GLfloat startPitch = 0.0f, GLfloat moveSpeed = 5.0f, GLfloat rotSpeed = 0.2f);
+	Camera();
+	Camera(glm::vec3 startPosition, glm::vec3 startUp, GLfloat startYaw, GLfloat startPitch, GLfloat startMoveSpeed, GLfloat startTurnSpeed);
 
-	void KeyControl(bool* keys, GLfloat deltaTime);
-	void MouseControl(GLfloat xChange, GLfloat yChange, bool isLeftClicking);
-	
-	glm::mat4 CalculateViewMatrix();
+	void keyControl(bool* keys, GLfloat deltaTime);
+	void mouseControl(GLfloat xChange, GLfloat yChange, bool isLeftClicking);
+
+	glm::vec3 getCameraPos() { return position; }
+	glm::vec3 GetCameraDirection() { return glm::normalize(front); }
+
+	glm::mat4 calculateViewMatrix();
 
 	~Camera();
 
@@ -29,9 +26,9 @@ private:
 	GLfloat yaw;
 	GLfloat pitch;
 
-	GLfloat movementSpeed;
+	GLfloat moveSpeed;
 	GLfloat turnSpeed;
 
-	void Update();
+	void update();
 };
 

@@ -1,6 +1,9 @@
+#include "pch.h"
 #include "Camera.h"
 
-Camera::Camera(glm::vec3 startPosition, glm::vec3 startUp, GLfloat startYaw, GLfloat startPitch, GLfloat moveSpeed, GLfloat rotSpeed)
+Camera::Camera() {}
+
+Camera::Camera(glm::vec3 startPosition, glm::vec3 startUp, GLfloat startYaw, GLfloat startPitch, GLfloat startMoveSpeed, GLfloat startTurnSpeed)
 {
 	position = startPosition;
 	worldUp = startUp;
@@ -8,77 +11,77 @@ Camera::Camera(glm::vec3 startPosition, glm::vec3 startUp, GLfloat startYaw, GLf
 	pitch = startPitch;
 	front = glm::vec3(0.0f, 0.0f, -1.0f);
 
-	movementSpeed = moveSpeed;
-	turnSpeed = rotSpeed;
+	moveSpeed = startMoveSpeed;
+	turnSpeed = startTurnSpeed;
 
-	Update();
+	update();
 }
 
-void Camera::KeyControl(bool* keys, GLfloat deltaTime)
+void Camera::keyControl(bool* keys, GLfloat deltaTime)
 {
+	GLfloat velocity = moveSpeed * deltaTime;
 
-	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
+	if (keys[GLFW_KEY_W])
 	{
-		position += front * movementSpeed * deltaTime;
+		position += front * velocity;
 	}
 
-	if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT])
+	if (keys[GLFW_KEY_S])
 	{
-		position += right * movementSpeed * deltaTime;
+		position -= front * velocity;
 	}
 
-	if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT])
+	if (keys[GLFW_KEY_A])
 	{
-		position -= right * movementSpeed * deltaTime;
+		position -= right * velocity;
 	}
 
-	if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN])
+	if (keys[GLFW_KEY_D])
 	{
-		position -= front * movementSpeed * deltaTime;
-	}
-
-	if (keys[GLFW_KEY_LEFT_SHIFT])
-	{
-		position -= worldUp * movementSpeed * deltaTime;
+		position += right * velocity;
 	}
 
 	if (keys[GLFW_KEY_SPACE])
 	{
-		position += worldUp * movementSpeed * deltaTime;
+		position += worldUp * velocity;
+	}
+
+	if (keys[GLFW_KEY_LEFT_SHIFT])
+	{
+		position -= worldUp * velocity;
 	}
 }
 
-void Camera::MouseControl(GLfloat xChange, GLfloat yChange, bool isLeftClicking)
+void Camera::mouseControl(GLfloat xChange, GLfloat yChange, bool isLeftClicking)
 {
-	if (!isLeftClicking)
-	{
-		return;
-	}
 	xChange *= turnSpeed;
 	yChange *= turnSpeed;
 
-	yaw += xChange;
-	pitch += yChange;
-
-	if (pitch > 89.0f)
+	if (isLeftClicking)
 	{
-		pitch = 89.0f;
-	}
+		yaw += xChange;
+		pitch += yChange;
 
-	if (pitch < -89.0f)
-	{
-		pitch = -89.0f;
-	}
+		if (pitch > 89.0f)
+		{
+			pitch = 89.0f;
+		}
 
-	Update();
+		if (pitch < -89.0f)
+		{
+			pitch = -89.0f;
+		}
+
+		update();
+	}
 }
 
-glm::mat4 Camera::CalculateViewMatrix()
+glm::mat4 Camera::calculateViewMatrix()
 {
-	return glm::lookAt(position, position + front, worldUp);
+	return glm::lookAt(position, position + front, up);
 }
 
-void Camera::Update()
+void Camera::update()
 {
 	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 	front.y = sin(glm::radians(pitch));
@@ -89,7 +92,7 @@ void Camera::Update()
 	up = glm::normalize(glm::cross(right, front));
 }
 
+
 Camera::~Camera()
 {
-
 }

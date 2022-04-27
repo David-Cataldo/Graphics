@@ -1,37 +1,62 @@
-#include <stdio.h>
-#include <string.h>
-#include <cmath>
-#include <vector>
-#include <iostream>
+// PRECOMPILED HEADER
+#include "pch.h"
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#define STB_IMAGE_IMPLEMENTATION
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+// ALL INCLUDED IN PRECOMPILED HEADER
+//#include <stdio.h>
+//#include <string.h>
+//#include <cmath>
+//#include <vector>
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
+//#include <GL\glew.h>
+//#include <GLFW\glfw3.h>
 
+//#include <glm\glm.hpp>
+//#include <glm\gtc\matrix_transform.hpp>
+//#include <glm\gtc\type_ptr.hpp>
+
+
+
+#include <chrono>
+#include <sys/timeb.h>
+#include <ctime>
+
+#include "MyWindow.h"
 #include "Mesh.h"
 #include "Shader.h"
-#include "MyWindow.h"
 #include "Camera.h"
-#include "Cube.h"
+#include "Texture.h"
+#include "DirectionalLight.h"	
+#include "Material.h"
+#include "CommonValues.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 
-
-const float toRadians = 3.14159265f / 180;
+const float toRadians = 3.14159265f / 180.0f;
 
 MyWindow mainWindow;
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
-
 Camera camera;
+long frames = 0;
+double mtime;
+
+
+Texture brickTexture;
+Texture dirtTexture;
+Texture plainTexture;
+
+Material shinyMat;
+Material dullMat;
+
+DirectionalLight mainLight;
+PointLight pointLights[MAX_POINT_LIGHTS];
+SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
-GLuint fps = 0;
+
 
 // Vertex Shader
 static const char* vShader = "Shaders/shader.vert.txt";
@@ -39,107 +64,224 @@ static const char* vShader = "Shaders/shader.vert.txt";
 // Fragment Shader
 static const char* fShader = "Shaders/shader.frag.txt";
 
-void CreateObject()
+void calcAverageNormals(unsigned int* indices, unsigned int indiceCount, GLfloat* vertices, unsigned int verticeCount,
+	unsigned int vLength, unsigned int normalOffset)
 {
-    unsigned int indices[] = {
-        0, 3, 1,
-        1, 3, 2,
-        2, 3, 0,
-        0, 1, 2
-    };
-    GLfloat vertices[] = {
-        -1.0f, -1.0f, 0.0f,
-        0.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 0.0f,
-        -0.0f, 1.0f, 0.0f
-    };
+	for (size_t i = 0; i < indiceCount; i += 3)
+	{
+		unsigned int in0 = indices[i] * vLength;
+		unsigned int in1 = indices[i + 1] * vLength;
+		unsigned int in2 = indices[i + 2] * vLength;
+		glm::vec3 v1(vertices[in1] - vertices[in0], vertices[in1 + 1] - vertices[in0 + 1], vertices[in1 + 2] - vertices[in0 + 2]);
+		glm::vec3 v2(vertices[in2] - vertices[in0], vertices[in2 + 1] - vertices[in0 + 1], vertices[in2 + 2] - vertices[in0 + 2]);
+		glm::vec3 normal = glm::cross(v1, v2);
+		normal = glm::normalize(normal);
 
-    Mesh* obj1 = new Mesh();
-    obj1->CreateMesh(vertices, indices, 12, 12);
-    meshList.push_back(obj1);
+		in0 += normalOffset; in1 += normalOffset; in2 += normalOffset;
+		vertices[in0] += normal.x; vertices[in0 + 1] += normal.y; vertices[in0 + 2] += normal.z;
+		vertices[in1] += normal.x; vertices[in1 + 1] += normal.y; vertices[in1 + 2] += normal.z;
+		vertices[in2] += normal.x; vertices[in2 + 1] += normal.y; vertices[in2 + 2] += normal.z;
+	}
 
-    Mesh* obj2 = new Mesh();
-    obj2->CreateMesh(vertices, indices, 12, 12);
-    meshList.push_back(obj2);
+	for (size_t i = 0; i < verticeCount / vLength; i++)
+	{
+		unsigned int nOffset = i * vLength + normalOffset;
+		glm::vec3 vec(vertices[nOffset], vertices[nOffset + 1], vertices[nOffset + 2]);
+		vec = glm::normalize(vec);
+		vertices[nOffset] = vec.x; vertices[nOffset + 1] = vec.y; vertices[nOffset + 2] = vec.z;
+	}
 }
 
-void CreateShader()
+void CreateObjects()
 {
-    Shader* shader1 = new Shader();
-    shader1->CreateFromFiles(vShader, fShader);
-    shaderList.push_back(*shader1);
+	unsigned int indices[] = {
+		0, 3, 1,
+		1, 3, 2,
+		2, 3, 0,
+		0, 1, 2
+	};
+
+	GLfloat vertices[] = {
+		//	x      y      z			u	  v			nx	  ny    nz
+			-1.0f, -1.0f, -0.6f,	0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+			0.0f, -1.0f, 1.0f,		0.5f, 0.0f,		0.0f, 0.0f, 0.0f,
+			1.0f, -1.0f, -0.6f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,		0.5f, 1.0f,		0.0f, 0.0f, 0.0f
+	};
+
+	unsigned int floorIndices[] = {
+		0, 2, 1,
+		1, 2, 3
+	};
+
+	GLfloat floorVertices[] = {
+		-10.0f, 0.0f, -10.0f,		0.0f, 0.0f,		0.0f, -1.0f, 0.0f,
+		10.0f, 0.0f, -10.0f,		10.0f, 0.0f,	0.0f, -1.0f, 0.0f,
+		-10.0f, 0.0f, 10.0f,		0.0f, 10.0f,	0.0f, -1.0f, 0.0f,
+		10.0f, 0.0f, 10.0f,			10.0f, 10.0f,	0.0f, -1.0f, 0.0f
+	};
+
+
+	calcAverageNormals(indices, 12, vertices, 32, 8, 5);
+
+	Mesh* obj1 = new Mesh();
+	obj1->CreateMesh(vertices, indices, 32, 12);
+	meshList.push_back(obj1);
+
+	Mesh* obj2 = new Mesh();
+	obj2->CreateMesh(vertices, indices, 32, 12);
+	meshList.push_back(obj2);
+
+	Mesh* obj3 = new Mesh();
+	obj3->CreateMesh(floorVertices, floorIndices, 32, 6);
+	meshList.push_back(obj3);
 }
 
+void CreateShaders()
+{
+	Shader* shader1 = new Shader();
+	shader1->CreateFromFiles(vShader, fShader);
+	shaderList.push_back(*shader1);
+}
 
 int main()
 {
-    mainWindow = MyWindow(1200, 1000);
-    mainWindow.Initialize();
-    
-    Cube* cube1 = new Cube();
+	mtime = time(nullptr);
 
-   // CreateObject();
-    CreateShader();
+	mainWindow = MyWindow(1600, 1400);
+	mainWindow.Initialise();
 
-    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.2f);
+	CreateObjects();
+	CreateShaders();
 
-    GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
-    glm::mat4 projection;
+	Assimp::Importer im;
 
-    // loop until window closed
+	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.15f);
 
-    while (!mainWindow.GetShouldClose())
-    {
-        GLfloat now = glfwGetTime();
-        deltaTime = now - lastTime;
-        lastTime = now;
-        fps = (int)(1 / deltaTime);
+	brickTexture = Texture("Textures/brick.png");
+	brickTexture.LoadTextureA();
+	dirtTexture = Texture("Textures/dirt.png");
+	dirtTexture.LoadTextureA();
+	plainTexture = Texture("Textures/plain.png");
+	plainTexture.LoadTextureA();
 
-        // get and handle user input events
-        glfwPollEvents();
-        mainWindow.UpdateSize();
+	shinyMat = Material(4.0f, 256);
+	dullMat = Material(0.3f, 4);
 
-        projection = glm::perspective(45.0f, mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
+	mainLight = DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.1f,
+		glm::vec3(0.0f, 0.0f, -1.0f), 0.1f);
 
-        camera.KeyControl(mainWindow.GetKeys(), deltaTime);
-        camera.MouseControl(mainWindow.GetXChange(), mainWindow.GetYChange(), mainWindow.IsLeftClicking());
+	unsigned int pointLightCount = 0;
 
-        // clear window - background color
-        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	pointLights[0] = PointLight(glm::vec3(1.0f, 1.0f, 0.0f),
+								0.0f, 1.0f,
+								glm::vec3(-4.0f, 0.0f, 0.0f),
+								0.3f, 0.2f, 0.1f);
+	pointLightCount++;
 
-        shaderList[0].UseShader();
-        uniformModel = shaderList[0].GetModelLocation();
-        uniformProjection = shaderList[0].GetProjectionLocation();
-        uniformView = shaderList[0].GetViewLocation();
+	pointLights[1] = PointLight(glm::vec3(0.0f, 0.0f, 1.0f),
+								0.0f, 1.0f,
+								glm::vec3(4.0f, 0.0f, 0.0f),
+								0.3f, 0.2f, 0.1f);
+	pointLightCount++;
 
-        glm::mat4 model(1.0f);
+	unsigned int spotLightCount = 0;
 
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
-        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
-        //meshList[0]->RenderMesh();
+	spotLights[0] = SpotLight(glm::vec3(1.0f, 1.0f, 1.0f),
+							  0.0f, 2.0f,
+							  glm::vec3(0.0f, 0.01f, 0.0f),
+							  glm::vec3(0.7f, -1.0f, 0.0f),
+							  1.0f, 0.0f, 0.0f,
+							  10.0f);
+	spotLightCount++;
 
-        cube1->RenderCube();
+	spotLights[1] = SpotLight(glm::vec3(1.0f, 1.0f, 1.0f),
+					0.0f, 1.0f,
+					glm::vec3(3.5f, 0.01f, 0.0f),
+					glm::vec3(0.9f, -1.0f, 0.0f),
+					1.0f, 0.0f, 0.0f,
+					20.0f);
+	spotLightCount++;
 
-        
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 1.0f, -2.5f));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
-        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        //meshList[1]->RenderMesh();
-
-        glUseProgram(0);
-
-        mainWindow.SwapBuffers();
-    }
+	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformEyePos = 0,
+		uniformSpecularIntensity = 0, uniformShine = 0;
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (GLfloat)mainWindow.getBufferWidth() / mainWindow.getBufferHeight(), 0.1f, 100.0f);
 
 
+	// Loop until window closed
+	while (!mainWindow.getShouldClose())
+	{
+		frames++;
+
+		GLfloat now = glfwGetTime(); // SDL_GetPerformanceCounter();
+		deltaTime = now - lastTime; // (now - lastTime)*1000/SDL_GetPerformanceFrequency();
+		lastTime = now;
+
+		// Get + Handle User Input
+		glfwPollEvents();
+		mainWindow.UpdateSize();
+
+		camera.keyControl(mainWindow.getsKeys(), deltaTime);
+		camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange(), mainWindow.getMouseLeftClicking());
+
+		// Clear the window
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		shaderList[0].UseShader();
+		uniformModel = shaderList[0].GetModelLocation();
+		uniformProjection = shaderList[0].GetProjectionLocation();
+		uniformView = shaderList[0].GetViewLocation();
+		uniformEyePos = shaderList[0].GetEyePosLocation();
+		uniformSpecularIntensity = shaderList[0].GetSpecularIntensityLocation();
+		uniformShine = shaderList[0].GetShineLocation();
+
+		glm::vec3 flashLight = camera.getCameraPos();
+		flashLight.y -= 0.3f;
+		flashLight.x -= 0.3f;
+
+		spotLights[0].SetFlash(flashLight, camera.GetCameraDirection());
+
+		shaderList[0].SetDirectionalLight(&mainLight);
+		shaderList[0].SetPointLights(pointLights, pointLightCount);
+		shaderList[0].SetSpotLights(spotLights, spotLightCount);
+
+		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
+		glUniform3f(uniformEyePos, camera.getCameraPos().x, camera.getCameraPos().y, camera.getCameraPos().z);
+
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		
+
+		brickTexture.UseTexture();
+		shinyMat.UseMaterial(uniformSpecularIntensity, uniformShine);
+		meshList[0]->RenderMesh();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 4.0f, -2.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+
+		dirtTexture.UseTexture();
+		dullMat.UseMaterial(uniformSpecularIntensity, uniformShine);
+		meshList[1]->RenderMesh();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+
+		dirtTexture.UseTexture();
+		shinyMat.UseMaterial(uniformSpecularIntensity, uniformShine);
+		meshList[2]->RenderMesh();
 
 
-    return 0;
+		glUseProgram(0);
+
+		mainWindow.swapBuffers();
+	}
+
+	std::cout << frames / (time(nullptr) - mtime) << std::endl;
+
+	return 0;
 }
-
-

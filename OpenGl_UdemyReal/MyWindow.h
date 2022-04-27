@@ -1,38 +1,33 @@
 #pragma once
 
-#include <stdio.h>
-
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "stdio.h"
 
 class MyWindow
 {
 public:
 	MyWindow();
+
 	MyWindow(GLint windowWidth, GLint windowHeight);
 
-	int Initialize();
+	int Initialise();
 
-	GLfloat GetBufferWidth() { return bufferWidth; }
-	GLfloat GetBufferHeight() { return bufferHeight; }
-
-	GLfloat GetWidth() { return width; }
-	GLfloat GetHeight() { return height; }
-
-	bool GetShouldClose() { return glfwWindowShouldClose(mainWindow); }
-	
-	bool* GetKeys() { return keys; }
-	bool IsLeftClicking() { return glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT); }
-	GLfloat GetXChange();
-	GLfloat GetYChange();
-	GLfloat GetMouseX() { return lastX; }
-	GLfloat GetMouseY() { return lastY; }
+	GLint getBufferWidth() { return bufferWidth; }
+	GLint getBufferHeight() { return bufferHeight; }
 
 	void UpdateSize();
-	void SwapBuffers() { glfwSwapBuffers(mainWindow); }
+
+	bool getShouldClose() { return glfwWindowShouldClose(mainWindow); }
+
+	bool* getsKeys() { return keys; }
+
+	bool getMouseLeftClicking() { return glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS; }
+	GLfloat getXChange();
+	GLfloat getYChange();
+
+	void swapBuffers() { glfwSwapBuffers(mainWindow); }
 
 	~MyWindow();
-	
+
 private:
 	GLFWwindow* mainWindow;
 
@@ -41,12 +36,13 @@ private:
 
 	bool keys[1024];
 
-	GLfloat lastX, lastY, xChange, yChange;
+	GLfloat lastX;
+	GLfloat lastY;
+	GLfloat xChange;
+	GLfloat yChange;
 	bool mouseFirstMoved;
 
-	void CreateCallbacks();
-	static void HandleKeys(GLFWwindow* window, int key, int code, int action, int mode);
-	static void HandleMouse(GLFWwindow* window, double xPos, double yPos);
+	void createCallbacks();
+	static void handleKeys(GLFWwindow* window, int key, int code, int action, int mode);
+	static void handleMouse(GLFWwindow* window, double xPos, double yPos);
 };
-
- 
