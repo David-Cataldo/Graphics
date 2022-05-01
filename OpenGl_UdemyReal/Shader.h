@@ -32,6 +32,12 @@ public:
 	void SetDirectionalLight(DirectionalLight* dLight);
 	void SetPointLights(PointLight* pLight, unsigned int lightCount);
 	void SetSpotLights(SpotLight* sLight, unsigned int lightCount);
+	void SetTexture(GLuint textureUnit);
+	void SetDirectionalShadowMap(GLuint textureUnit);
+	void SetDirectionalLighttransform(glm::mat4* lTransform);
+
+
+	void UsePhongLighting(bool b);
 
 	~Shader();
 
@@ -40,13 +46,15 @@ private:
 	int spotLightCount;
 
 	GLuint shaderID, uniformProjection, uniformModel, uniformView, uniformEyePos,
-		uniformSpecularIntensity, uniformShine;
+		uniformSpecularIntensity, uniformShine,
+		uniformTexture,
+		uniformDirectionalLightTransform, uniformDirectionalShadowMap;
 
 	struct {
 		GLuint uniformColor;
 		GLuint uniformAmbientIntensity;
 		GLuint uniformDiffuseIntensity;
-
+		
 		GLuint uniformDirection;
 	} uniformDirectionalLight;
 
