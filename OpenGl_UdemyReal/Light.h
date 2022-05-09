@@ -11,6 +11,9 @@ public:
 
 	ShadowMap* GetShadowMap() { return shadowMap; }
 
+	void Toggle() { isOn = !isOn; }
+	bool IsOn() { return isOn; }
+
 	~Light();
 
 protected:
@@ -21,5 +24,7 @@ protected:
 	glm::mat4 lightProj;
 
 	ShadowMap* shadowMap;
+
+	bool isOn;
 };
 

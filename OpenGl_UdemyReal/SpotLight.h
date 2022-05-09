@@ -7,7 +7,9 @@ class SpotLight :
 {
 public:
     SpotLight();
-    SpotLight(glm::vec3 ambientCol, GLfloat aIntensity, GLfloat dIntensity, glm::vec3 pos, glm::vec3 dir, GLfloat con, GLfloat lin, GLfloat exp, GLfloat edg);
+    SpotLight(GLuint shadowWidth, GLuint shadowHeight, GLfloat near, GLfloat far,
+        glm::vec3 ambientCol, GLfloat aIntensity, GLfloat dIntensity, 
+        glm::vec3 pos, glm::vec3 dir, GLfloat con, GLfloat lin, GLfloat exp, GLfloat edg);
 
     void UseLight(GLfloat ambientIntensityLocation, GLfloat ambientColorLocation, GLfloat diffuseIntensityLocation,
         GLfloat positionLocation, GLfloat directionLocation, GLfloat constantLocation, GLfloat linearLocation, GLfloat exponentLocation, GLfloat edgeLocation);

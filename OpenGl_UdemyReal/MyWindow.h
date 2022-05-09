@@ -21,6 +21,9 @@ public:
 	bool* getsKeys() { return keys; }
 
 	bool getMouseLeftClicking() { return glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS; }
+	GLfloat getMouseX() { return lastX; }
+	GLfloat getMouseY() { return lastY; }
+
 	GLfloat getXChange();
 	GLfloat getYChange();
 

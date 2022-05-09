@@ -61,6 +61,8 @@ int MyWindow::Initialise()
 
 	// Set the current context
 	glfwMakeContextCurrent(mainWindow);
+	glfwSwapInterval(0);
+
 
 	// Handle Key + Mouse Input
 	createCallbacks();

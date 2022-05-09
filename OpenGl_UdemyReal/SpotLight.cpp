@@ -8,8 +8,10 @@ SpotLight::SpotLight() : PointLight()
 	procEdge = cosf(glm::radians(edge));
 }
 
-SpotLight::SpotLight(glm::vec3 ambientCol, GLfloat aIntensity, GLfloat dIntensity, glm::vec3 pos, glm::vec3 dir, GLfloat con, GLfloat lin, GLfloat exp, GLfloat edg) 
-	: PointLight(ambientCol, aIntensity, dIntensity, pos, con, lin, exp)
+SpotLight::SpotLight(GLuint shadowWidth, GLuint shadowHeight, GLfloat near, GLfloat far, 
+	glm::vec3 ambientCol, GLfloat aIntensity, GLfloat dIntensity, 
+	glm::vec3 pos, glm::vec3 dir, GLfloat con, GLfloat lin, GLfloat exp, GLfloat edg)
+	: PointLight(shadowWidth, shadowHeight, near, far, ambientCol, aIntensity, dIntensity, pos, con, lin, exp)
 {
 	direction = glm::normalize(dir);
 	edge = edg;
@@ -19,9 +21,17 @@ SpotLight::SpotLight(glm::vec3 ambientCol, GLfloat aIntensity, GLfloat dIntensit
 
 void SpotLight::UseLight(GLfloat ambientIntensityLocation, GLfloat ambientColorLocation, GLfloat diffuseIntensityLocation, GLfloat positionLocation, GLfloat directionLocation, GLfloat constantLocation, GLfloat linearLocation, GLfloat exponentLocation, GLfloat edgeLocation)
 {
+	if(isOn)
+	{
+		glUniform1f(ambientIntensityLocation, ambientIntensity);
+		glUniform1f(diffuseIntensityLocation, diffuseIntensity);
+	}
+	else
+	{
+		glUniform1f(ambientIntensityLocation, 0.0f);
+		glUniform1f(diffuseIntensityLocation, 0.0f);
+	}
 	glUniform3f(ambientColorLocation, color.x, color.y, color.z);
-	glUniform1f(ambientIntensityLocation, ambientIntensity);
-	glUniform1f(diffuseIntensityLocation, diffuseIntensity);
 
 	glUniform3f(positionLocation, position.x, position.y, position.z);
 	glUniform1f(constantLocation, constant);
