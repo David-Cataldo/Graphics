@@ -14,6 +14,9 @@ public:
 	GLint getBufferWidth() { return bufferWidth; }
 	GLint getBufferHeight() { return bufferHeight; }
 
+	GLint getWidth() { return width; }
+	GLint getHeight() { return height; }
+
 	void UpdateSize();
 
 	bool getShouldClose() { return glfwWindowShouldClose(mainWindow); }
@@ -26,6 +29,8 @@ public:
 
 	GLfloat getXChange();
 	GLfloat getYChange();
+
+	GLFWwindow* getGLFWWindow() { return mainWindow; }
 
 	void swapBuffers() { glfwSwapBuffers(mainWindow); }
 

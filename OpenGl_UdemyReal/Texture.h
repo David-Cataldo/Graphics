@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stb_image.h"
+#include "CommonValues.h"
 
 class Texture
 {

@@ -22,6 +22,7 @@
 #include <sys/timeb.h>
 #include <ctime>
 #include <memory>
+#include "wtypes.h"
 
 #include "MyWindow.h"
 #include "Mesh.h"
@@ -34,6 +35,9 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "Model.h"
+#include "Skybox.h"
+
+RECT rcScreen;
 
 const float toRadians = 3.14159265f / 180.0f;
 
@@ -41,11 +45,13 @@ GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformEyePos =
 uniformSpecularIntensity = 0, uniformShine = 0, 
 uniformOmniLightPos = 0, uniformFarPlane = 0;
 
+
 MyWindow mainWindow;
-std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
 Shader directionalShadowShader;
 Shader omniShadowShader;
+
+Skybox skybox;
 
 Camera camera;
 long frames = 0;
@@ -59,7 +65,14 @@ Texture plainTexture;
 Material shinyMat;
 Material dullMat;
 
+bool isActive = true;
+
 std::unique_ptr<Model> car (new Model);
+Model tank;
+
+GLfloat pos = 0.0f;
+GLfloat mult = 0.01f;
+GLfloat rot = 0.0f;
 
 DirectionalLight mainLight;
 PointLight pointLights[MAX_POINT_LIGHTS];
@@ -79,77 +92,9 @@ static const char* vShader = "Shaders/shader.vert.txt";
 // Fragment Shader
 static const char* fShader = "Shaders/shader.frag.txt";
 
-void calcAverageNormals(unsigned int* indices, unsigned int indiceCount, GLfloat* vertices, unsigned int verticeCount,
-	unsigned int vLength, unsigned int normalOffset)
+std::unique_ptr<Model> RayCast(glm::vec3 pos, glm::vec3 dir, GLfloat dist)
 {
-	for (size_t i = 0; i < indiceCount; i += 3)
-	{
-		unsigned int in0 = indices[i] * vLength;
-		unsigned int in1 = indices[i + 1] * vLength;
-		unsigned int in2 = indices[i + 2] * vLength;
-		glm::vec3 v1(vertices[in1] - vertices[in0], vertices[in1 + 1] - vertices[in0 + 1], vertices[in1 + 2] - vertices[in0 + 2]);
-		glm::vec3 v2(vertices[in2] - vertices[in0], vertices[in2 + 1] - vertices[in0 + 1], vertices[in2 + 2] - vertices[in0 + 2]);
-		glm::vec3 normal = glm::cross(v1, v2);
-		normal = glm::normalize(normal);
 
-		in0 += normalOffset; in1 += normalOffset; in2 += normalOffset;
-		vertices[in0] += normal.x; vertices[in0 + 1] += normal.y; vertices[in0 + 2] += normal.z;
-		vertices[in1] += normal.x; vertices[in1 + 1] += normal.y; vertices[in1 + 2] += normal.z;
-		vertices[in2] += normal.x; vertices[in2 + 1] += normal.y; vertices[in2 + 2] += normal.z;
-	}
-
-	for (size_t i = 0; i < verticeCount / vLength; i++)
-	{
-		unsigned int nOffset = i * vLength + normalOffset;
-		glm::vec3 vec(vertices[nOffset], vertices[nOffset + 1], vertices[nOffset + 2]);
-		vec = glm::normalize(vec);
-		vertices[nOffset] = vec.x; vertices[nOffset + 1] = vec.y; vertices[nOffset + 2] = vec.z;
-	}
-}
-
-void CreateObjects()
-{
-	unsigned int indices[] = {
-		0, 3, 1,
-		1, 3, 2,
-		2, 3, 0,
-		0, 1, 2
-	};
-
-	GLfloat vertices[] = {
-		//	x      y      z			u	  v			nx	  ny    nz
-			-1.0f, -1.0f, -0.6f,	0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
-			0.0f, -1.0f, 1.0f,		0.5f, 0.0f,		0.0f, 0.0f, 0.0f,
-			1.0f, -1.0f, -0.6f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,		0.5f, 1.0f,		0.0f, 0.0f, 0.0f
-	};
-
-	unsigned int floorIndices[] = {
-		0, 2, 1,
-		1, 2, 3
-	};
-
-	GLfloat floorVertices[] = {
-		-10.0f, 0.0f, -10.0f,		0.0f, 0.0f,		0.0f, -1.0f, 0.0f,
-		10.0f, 0.0f, -10.0f,		10.0f, 0.0f,	0.0f, -1.0f, 0.0f,
-		-10.0f, 0.0f, 10.0f,		0.0f, 10.0f,	0.0f, -1.0f, 0.0f,
-		10.0f, 0.0f, 10.0f,			10.0f, 10.0f,	0.0f, -1.0f, 0.0f
-	};
-
-
-	calcAverageNormals(indices, 12, vertices, 32, 8, 5);
-
-	Mesh* obj1 = new Mesh();
-	obj1->CreateMesh(vertices, indices, 32, 12);
-	meshList.push_back(obj1);
-
-	Mesh* obj2 = new Mesh();
-	obj2->CreateMesh(vertices, indices, 32, 12);
-	meshList.push_back(obj2);
-
-	Mesh* obj3 = new Mesh();
-	obj3->CreateMesh(floorVertices, floorIndices, 32, 6);
-	meshList.push_back(obj3);
 }
 
 void CreateShaders()
@@ -165,39 +110,19 @@ void CreateShaders()
 
 void RenderScene()
 {
+
 	glm::mat4 model(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
-	glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
-	brickTexture.UseTexture();
-	shinyMat.UseMaterial(uniformSpecularIntensity, uniformShine);
-	meshList[0]->RenderMesh();
-
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 4.0f, -2.5f));
-	glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-
-	dirtTexture.UseTexture();
-	dullMat.UseMaterial(uniformSpecularIntensity, uniformShine);
-	meshList[1]->RenderMesh();
-
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
-	glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-
-	dirtTexture.UseTexture();
-	shinyMat.UseMaterial(uniformSpecularIntensity, uniformShine);
-	meshList[2]->RenderMesh();
-
-	IMrot += 0.1;
+	IMrot += 0.6;
 	if (IMrot > 360.0)
 	{
 		IMrot = 0.1;
 	}
 
+
 	model = glm::mat4(1.0f);
-	//model = glm::rotate(model, IMrot * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, 2.0f, 9.0f));
+	model = glm::translate(model, glm::vec3(pos, -1.5f, 0.0f));
+	model = glm::rotate(model, IMrot * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 	//model = glm::rotate(model, 90.0f * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 	//model = glm::rotate(model, 35.0f * toRadians, glm::vec3(0.0f, 0.0f, -1.0f));
 	//model = glm::rotate(model, 90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -206,9 +131,7 @@ void RenderScene()
 
 	shinyMat.UseMaterial(uniformSpecularIntensity, uniformShine);
 	car->RenderModel();
-
-
-	if (mainWindow.getsKeys()[GLFW_KEY_Y])
+	if (!isActive)
 	{
 		car.reset();
 	}
@@ -258,6 +181,17 @@ void OmniShadowMapPass(PointLight* light)
 
 void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 {
+	mainWindow.UpdateSize();
+
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	skybox.DrawSkybox(viewMatrix, projectionMatrix);
+
 	shaderList[0].UseShader();
 
 	uniformModel = shaderList[0].GetModelLocation();
@@ -267,12 +201,7 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 	uniformSpecularIntensity = shaderList[0].GetSpecularIntensityLocation();
 	uniformShine = shaderList[0].GetShineLocation();
 
-	glViewport(0, 0, 1600, 1400);
-
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	mainWindow.UpdateSize();
+	//glViewport(0, 0, 1600, 1400);
 
 	glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 	glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
@@ -302,11 +231,11 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 int main()
 {
 	mtime = time(nullptr);
+	GetWindowRect(GetDesktopWindow(), &rcScreen);
 
-	mainWindow = MyWindow(1600, 1400);
+	mainWindow = MyWindow(rcScreen.right*1.5, rcScreen.bottom*1.5);
 	mainWindow.Initialise();
 
-	CreateObjects();
 	CreateShaders();
 
 	Assimp::Importer im;
@@ -326,10 +255,11 @@ int main()
 	
 	car->LoadModel("Models/Ironman.obj");
 
+	tank.LoadModel("Models/old_tank.obj");
 
 	mainLight = DirectionalLight(4096, 4096,
-								glm::vec3(1.0f, 1.0f, 1.0f), 0.1f,
-								glm::vec3(0.0f, -15.0f, -10.0f), 0.2f);
+								glm::vec3(9.0f, 0.45f, 0.17f), 0.1f,
+								glm::vec3(-10.0f, -12.0f, 18.5f), 0.5f);
 
 
 	pointLights[0] = PointLight(1024, 1024, 0.01f, 100.0f,
@@ -337,7 +267,7 @@ int main()
 								0.0f, 1.0f,
 								glm::vec3(-4.0f, 0.0f, 0.0f),
 								0.3f, 0.2f, 0.1f);
-	
+
 	pointLightCount++;
 
 	pointLights[1] = PointLight(1024, 1024, 0.01f, 100.0f, glm::vec3(0.0f, 0.0f, 1.0f),
@@ -363,7 +293,25 @@ int main()
 								glm::vec3(0.9f, -1.0f, 0.0f),
 								1.0f, 0.0f, 0.0f,
 								20.0f);
-	//spotLightCount++;
+	spotLightCount++;
+
+	std::vector<std::string> skyboxFaces;
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_lf.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_up.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_dn.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_bk.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_ft.tga");
+
+	skybox = Skybox(skyboxFaces);
+
+
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(mainWindow.getGLFWWindow(), true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+
 
 	// Loop until window closed
 	while (!mainWindow.getShouldClose())
@@ -378,8 +326,11 @@ int main()
 		// Get + Handle User Input
 		glfwPollEvents();
 
+		if (!io.WantCaptureMouse)
+		{
+			camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange(), mainWindow.getMouseLeftClicking());
+		}
 		camera.keyControl(mainWindow.getsKeys(), deltaTime);
-		camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange(), mainWindow.getMouseLeftClicking());
 		if (mainWindow.getMouseLeftClicking())
 		{
 			//std::cout << "X: " << mainWindow.getMouseX() << "  Y: " << mainWindow.getMouseY() << std::endl;
@@ -392,7 +343,7 @@ int main()
 			std::cout << spotLights[0].IsOn() << std::endl;
 		}
 
-		if (frames % 6 == 0)
+		if (frames % 10 == 0)
 		{
 			DirectionalShadowMapPass(&mainLight);
 		}
@@ -412,13 +363,30 @@ int main()
 		}
 		RenderPass(projection, camera.calculateViewMatrix());
 		
+		
+		ImGui::SetNextWindowPos(ImVec2(3 * mainWindow.getWidth() / 4, 0));
+		ImGui::SetNextWindowSize(ImVec2(mainWindow.getWidth() / 4, mainWindow.getHeight()/2));
+		ImGui::Begin("Scene Objects");
+		ImGui::End();
 
+		ImGui::SetNextWindowPos(ImVec2(3 * mainWindow.getWidth() / 4, mainWindow.getHeight()/2));
+		ImGui::SetNextWindowSize(ImVec2(mainWindow.getWidth() / 4, mainWindow.getHeight() / 2));
+		ImGui::Begin("Object Info");
+		ImGui::Text("X: "); ImGui::SameLine();
+		ImGui::InputFloat("", &pos);
+		ImGui::End();
 
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		//glUseProgram(0);
 
 		mainWindow.swapBuffers();
 	}
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
 	std::cout << frames / (time(nullptr) - mtime) << std::endl;
 	std::cout << (time(nullptr) - mtime);

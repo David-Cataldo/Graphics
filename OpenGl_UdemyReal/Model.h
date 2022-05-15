@@ -19,6 +19,7 @@ public:
 	void LoadModel(const std::string& fileName);
 	void RenderModel();
 	void ClearModel();
+	std::vector<Mesh*> GetMeshes() { return meshList; }
 
 	~Model();
 

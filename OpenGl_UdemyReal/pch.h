@@ -7,6 +7,12 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include <bitset>
+
+// IMGUI 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 // glm math
 #include <glm\glm.hpp>
@@ -19,3 +25,4 @@
 
 // Model Importer
 #include <assimp/Importer.hpp>
+
