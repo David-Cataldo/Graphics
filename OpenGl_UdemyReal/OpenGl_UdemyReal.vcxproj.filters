@@ -167,5 +167,8 @@
     <ClInclude Include="..\..\External Libs\IMGUI\imstb_textedit.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="ECS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

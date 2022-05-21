@@ -111,6 +111,7 @@ void CreateShaders()
 void RenderScene()
 {
 
+	/*
 	glm::mat4 model(1.0f);
 
 	IMrot += 0.6;
@@ -135,6 +136,7 @@ void RenderScene()
 	{
 		car.reset();
 	}
+	*/
 }
 
 void DirectionalShadowMapPass(DirectionalLight* light)
@@ -268,13 +270,13 @@ int main()
 								glm::vec3(-4.0f, 0.0f, 0.0f),
 								0.3f, 0.2f, 0.1f);
 
-	pointLightCount++;
+	//pointLightCount++;
 
 	pointLights[1] = PointLight(1024, 1024, 0.01f, 100.0f, glm::vec3(0.0f, 0.0f, 1.0f),
 								0.0f, 1.0f,
 								glm::vec3(1.0f, 0.0f, -2.0f),
 								0.3f, 0.2f, 0.1f);
-	pointLightCount++;
+	//pointLightCount++;
 
 
 	spotLights[0] = SpotLight(1024, 1024, 0.01f, 100.0f, 
@@ -284,7 +286,7 @@ int main()
 								glm::vec3(0.0f, -1.0f, 0.0f),
 								1.0f, 0.0f, 0.0f,
 								10.0f);
-	spotLightCount++;
+	//spotLightCount++;
 
 	spotLights[1] = SpotLight(1024, 1024, 0.01f, 100.0f, 
 								glm::vec3(1.0f, 1.0f, 1.0f),
@@ -293,15 +295,16 @@ int main()
 								glm::vec3(0.9f, -1.0f, 0.0f),
 								1.0f, 0.0f, 0.0f,
 								20.0f);
-	spotLightCount++;
+	//spotLightCount++;
 
 	std::vector<std::string> skyboxFaces;
-	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
-	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_lf.tga");
-	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_up.tga");
-	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_dn.tga");
-	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_bk.tga");
-	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_ft.tga");
+
+	skyboxFaces.push_back("Textures/Skybox/Daylight Box_Right.bmp");
+	skyboxFaces.push_back("Textures/Skybox/Daylight Box_Left.bmp");
+	skyboxFaces.push_back("Textures/Skybox/Daylight Box_Top.bmp");
+	skyboxFaces.push_back("Textures/Skybox/Daylight Box_Bottom.bmp");
+	skyboxFaces.push_back("Textures/Skybox/Daylight Box_Front.bmp");
+	skyboxFaces.push_back("Textures/Skybox/Daylight Box_Back.bmp");
 
 	skybox = Skybox(skyboxFaces);
 
