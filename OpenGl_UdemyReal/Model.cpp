@@ -3,6 +3,7 @@
 
 Model::Model()
 {
+	model = glm::mat4(1.0f);
 }
 
 void Model::RenderModel()
@@ -21,6 +22,7 @@ void Model::RenderModel()
 
 		meshList[i]->RenderMesh();
 	}
+	model = glm::mat4(1.0f);
 }
 
 void Model::LoadModel(const std::string& fileName)
@@ -154,6 +156,72 @@ void Model::ClearModel()
 			delete textureList[i];
 			textureList[i] = nullptr;
 		}
+	}
+}
+
+void Model::Translate(GLfloat dist, PhySimsDirection dir)
+{
+	if (dir == PS_UP)
+	{
+		model = glm::translate(model, glm::vec3(0.0f, dist, 0.0f));
+	}
+	else if (dir == PS_DOWN)
+	{
+		model = glm::translate(model, glm::vec3(0.0f, dist, 0.0f));
+	}
+	else if (dir == PS_LEFT)
+	{
+		model = glm::translate(model, glm::vec3(dist, 0.0f, 0.0f));
+	}
+	else if (dir == PS_RIGHT)
+	{
+		model = glm::translate(model, glm::vec3(-dist, 0.0f, 0.0f));
+	}
+	else if (dir == PS_FORWARD)
+	{
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, dist));
+	}
+	else if (dir == PS_BACKWARD)
+	{
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -dist));
+	}
+}
+
+void Model::Rotate(GLfloat angle, PhySimsAxis axis, PhySimsAngleMode AM)
+{
+	if (AM == PS_DEGREES)
+	{
+		angle = glm::radians(angle);
+		std::cout << angle << std::endl;
+	}
+
+	if (axis == PS_X_AXIS)
+	{
+		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	else if (axis == PS_Y_AXIS)
+	{
+		model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	else if (axis == PS_Z_AXIS)
+	{
+		model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+	}
+}
+
+void Model::Scale(GLfloat dist, PhySimsAxis axis)
+{
+	if (axis == PS_X_AXIS)
+	{
+		model = glm::scale(model, glm::vec3(dist, 0.0f, 0.0f));
+	}
+	else if (axis == PS_Y_AXIS)
+	{
+		model = glm::scale(model, glm::vec3(0.0f, dist, 0.0f));
+	}
+	else if (axis == PS_Z_AXIS)
+	{
+		model = glm::scale(model, glm::vec3(0.0f, dist, 1.0f));
 	}
 }
 

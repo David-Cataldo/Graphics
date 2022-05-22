@@ -111,7 +111,7 @@ void CreateShaders()
 void RenderScene()
 {
 
-	/*
+	
 	glm::mat4 model(1.0f);
 
 	IMrot += 0.6;
@@ -121,9 +121,13 @@ void RenderScene()
 	}
 
 
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(pos, -1.5f, 0.0f));
-	model = glm::rotate(model, IMrot * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+	model = car->GetModel();
+	//model = glm::translate(model, glm::vec3(pos, -1.5f, 0.0f));
+	car->Translate(pos, PS_LEFT);
+	model = car->GetModel();
+	//model = glm::rotate(model, glm::radians(IMrot), glm::vec3(0.0f, 1.0f, 0.0f));
+	car->Rotate(IMrot, PS_Y_AXIS, PS_RADIANS);
+	model = car->GetModel();
 	//model = glm::rotate(model, 90.0f * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 	//model = glm::rotate(model, 35.0f * toRadians, glm::vec3(0.0f, 0.0f, -1.0f));
 	//model = glm::rotate(model, 90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -136,7 +140,7 @@ void RenderScene()
 	{
 		car.reset();
 	}
-	*/
+	
 }
 
 void DirectionalShadowMapPass(DirectionalLight* light)
