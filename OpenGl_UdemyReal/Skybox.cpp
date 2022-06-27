@@ -1,5 +1,6 @@
-#include "pch.h"
 #include "Skybox.h"
+
+
 
 Skybox::Skybox()
 {
@@ -7,28 +8,31 @@ Skybox::Skybox()
 
 Skybox::Skybox(std::vector<std::string> faceLocations)
 {
+	// Shader Setup
 	skyShader = new Shader();
 	skyShader->CreateFromFiles("Shaders/skybox.vert.txt", "Shaders/skybox.frag.txt");
 
 	uniformProjection = skyShader->GetProjectionLocation();
 	uniformView = skyShader->GetViewLocation();
 
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	// Texture Setup
+	glGenTextures(1, &textureId);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
 
 	int width, height, bitDepth;
 
 	for (size_t i = 0; i < 6; i++)
 	{
-		unsigned char* textData = stbi_load(faceLocations[i].c_str(), &width, &height, &bitDepth, 0);
-		if (!textData)
+		unsigned char* texData = stbi_load(faceLocations[i].c_str(), &width, &height, &bitDepth, 0);
+		if (!texData)
 		{
-			printf("Failed to find file at: %s\n", faceLocations[i].c_str());
+			printf("Failed to find: %s\n", faceLocations[i].c_str());
 			return;
 		}
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textData);
-		stbi_image_free(textData);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texData);
+		stbi_image_free(texData);
 	}
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -37,6 +41,8 @@ Skybox::Skybox(std::vector<std::string> faceLocations)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+
+	// Mesh Setup
 	unsigned int skyboxIndices[] = {
 		// front
 		0, 1, 2,
@@ -86,9 +92,9 @@ void Skybox::DrawSkybox(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
 	glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
 
-	skyShader->Validate(" ");
+	skyShader->Validate();
 
 	skyMesh->RenderMesh();
 

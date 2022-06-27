@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Camera.h"
 
 Camera::Camera() {}
@@ -40,45 +39,41 @@ void Camera::keyControl(bool* keys, GLfloat deltaTime)
 	{
 		position += right * velocity;
 	}
-
-	if (keys[GLFW_KEY_SPACE])
-	{
-		position += worldUp * velocity;
-	}
-
-	if (keys[GLFW_KEY_LEFT_SHIFT])
-	{
-		position -= worldUp * velocity;
-	}
 }
 
-void Camera::mouseControl(GLfloat xChange, GLfloat yChange, bool isLeftClicking)
+void Camera::mouseControl(GLfloat xChange, GLfloat yChange)
 {
 	xChange *= turnSpeed;
 	yChange *= turnSpeed;
 
-	if (isLeftClicking)
+	yaw += xChange;
+	pitch += yChange;
+
+	if (pitch > 89.0f)
 	{
-		yaw += xChange;
-		pitch += yChange;
-
-		if (pitch > 89.0f)
-		{
-			pitch = 89.0f;
-		}
-
-		if (pitch < -89.0f)
-		{
-			pitch = -89.0f;
-		}
-
-		update();
+		pitch = 89.0f;
 	}
+
+	if (pitch < -89.0f)
+	{
+		pitch = -89.0f;
+	}
+
+	update();
 }
 
 glm::mat4 Camera::calculateViewMatrix()
 {
 	return glm::lookAt(position, position + front, up);
+}
+
+glm::vec3 Camera::getCameraPosition()
+{
+	return position;
+}
+glm::vec3 Camera::getCameraDirection()
+{
+	return glm::normalize(front);
 }
 
 void Camera::update()

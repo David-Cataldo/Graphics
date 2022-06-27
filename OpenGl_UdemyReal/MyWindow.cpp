@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "MyWindow.h"
 
 MyWindow::MyWindow()
@@ -61,12 +60,10 @@ int MyWindow::Initialise()
 
 	// Set the current context
 	glfwMakeContextCurrent(mainWindow);
-	glfwSwapInterval(0);
-
 
 	// Handle Key + Mouse Input
 	createCallbacks();
-	//glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// Allow modern extension access
 	glewExperimental = GL_TRUE;
@@ -81,20 +78,11 @@ int MyWindow::Initialise()
 	}
 
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
 
 	// Create Viewport
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
 	glfwSetWindowUserPointer(mainWindow, this);
-}
-
-void MyWindow::UpdateSize()
-{
-	glfwGetWindowSize(mainWindow, &width, &height);
-	glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
-	glViewport(0, 0, bufferWidth, bufferHeight);
 }
 
 void MyWindow::createCallbacks()

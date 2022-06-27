@@ -1,16 +1,11 @@
-#include "pch.h"
 #include "Model.h"
 
 Model::Model()
 {
-	model = glm::mat4(1.0f);
 }
 
 void Model::RenderModel()
 {
-	if (this == nullptr)
-		return;
-
 	for (size_t i = 0; i < meshList.size(); i++)
 	{
 		unsigned int materialIndex = meshToTex[i];
@@ -22,14 +17,10 @@ void Model::RenderModel()
 
 		meshList[i]->RenderMesh();
 	}
-	model = glm::mat4(1.0f);
 }
 
 void Model::LoadModel(const std::string& fileName)
 {
-	if (this == nullptr)
-		return;
-
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
 
@@ -46,9 +37,6 @@ void Model::LoadModel(const std::string& fileName)
 
 void Model::LoadNode(aiNode* node, const aiScene* scene)
 {
-	if (this == nullptr)
-		return;
-
 	for (size_t i = 0; i < node->mNumMeshes; i++)
 	{
 		LoadMesh(scene->mMeshes[node->mMeshes[i]], scene);
@@ -62,9 +50,6 @@ void Model::LoadNode(aiNode* node, const aiScene* scene)
 
 void Model::LoadMesh(aiMesh* mesh, const aiScene* scene)
 {
-	if (this == nullptr)
-		return;
-
 	std::vector<GLfloat> vertices;
 	std::vector<unsigned int> indices;
 
@@ -98,9 +83,6 @@ void Model::LoadMesh(aiMesh* mesh, const aiScene* scene)
 
 void Model::LoadMaterials(const aiScene* scene)
 {
-	if (this == nullptr)
-		return;
-
 	textureList.resize(scene->mNumMaterials);
 
 	for (size_t i = 0; i < scene->mNumMaterials; i++)
@@ -159,73 +141,6 @@ void Model::ClearModel()
 	}
 }
 
-void Model::Translate(GLfloat dist, PhySimsDirection dir)
-{
-	if (dir == PS_UP)
-	{
-		model = glm::translate(model, glm::vec3(0.0f, dist, 0.0f));
-	}
-	else if (dir == PS_DOWN)
-	{
-		model = glm::translate(model, glm::vec3(0.0f, dist, 0.0f));
-	}
-	else if (dir == PS_LEFT)
-	{
-		model = glm::translate(model, glm::vec3(dist, 0.0f, 0.0f));
-	}
-	else if (dir == PS_RIGHT)
-	{
-		model = glm::translate(model, glm::vec3(-dist, 0.0f, 0.0f));
-	}
-	else if (dir == PS_FORWARD)
-	{
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, dist));
-	}
-	else if (dir == PS_BACKWARD)
-	{
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -dist));
-	}
-}
-
-void Model::Rotate(GLfloat angle, PhySimsAxis axis, PhySimsAngleMode AM)
-{
-	if (AM == PS_DEGREES)
-	{
-		angle = glm::radians(angle);
-		std::cout << angle << std::endl;
-	}
-
-	if (axis == PS_X_AXIS)
-	{
-		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-	}
-	else if (axis == PS_Y_AXIS)
-	{
-		model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-	}
-	else if (axis == PS_Z_AXIS)
-	{
-		model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-	}
-}
-
-void Model::Scale(GLfloat dist, PhySimsAxis axis)
-{
-	if (axis == PS_X_AXIS)
-	{
-		model = glm::scale(model, glm::vec3(dist, 0.0f, 0.0f));
-	}
-	else if (axis == PS_Y_AXIS)
-	{
-		model = glm::scale(model, glm::vec3(0.0f, dist, 0.0f));
-	}
-	else if (axis == PS_Z_AXIS)
-	{
-		model = glm::scale(model, glm::vec3(0.0f, dist, 1.0f));
-	}
-}
-
 Model::~Model()
 {
-	ClearModel();
 }

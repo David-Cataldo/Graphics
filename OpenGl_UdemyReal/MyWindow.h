@@ -2,6 +2,9 @@
 
 #include "stdio.h"
 
+#include <GL\glew.h>
+#include <GLFW\glfw3.h>
+
 class MyWindow
 {
 public:
@@ -14,23 +17,11 @@ public:
 	GLint getBufferWidth() { return bufferWidth; }
 	GLint getBufferHeight() { return bufferHeight; }
 
-	GLint getWidth() { return width; }
-	GLint getHeight() { return height; }
-
-	void UpdateSize();
-
 	bool getShouldClose() { return glfwWindowShouldClose(mainWindow); }
 
 	bool* getsKeys() { return keys; }
-
-	bool getMouseLeftClicking() { return glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS; }
-	GLfloat getMouseX() { return lastX; }
-	GLfloat getMouseY() { return lastY; }
-
 	GLfloat getXChange();
 	GLfloat getYChange();
-
-	GLFWwindow* getGLFWWindow() { return mainWindow; }
 
 	void swapBuffers() { glfwSwapBuffers(mainWindow); }
 

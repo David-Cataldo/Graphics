@@ -1,21 +1,24 @@
-#include "pch.h"
 #include "DirectionalLight.h"
 
 DirectionalLight::DirectionalLight() : Light()
 {
 	direction = glm::vec3(0.0f, -1.0f, 0.0f);
-	lightProj = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 20.0f);
 }
 
-DirectionalLight::DirectionalLight(GLuint shadowWidth, GLuint shadowHeight, glm::vec3 ambientCol, GLfloat aIntensity, glm::vec3 diffuseDir, GLfloat dIntensity) : Light(shadowWidth, shadowHeight, ambientCol, aIntensity, dIntensity)
+DirectionalLight::DirectionalLight(GLuint shadowWidth, GLuint shadowHeight,
+	GLfloat red, GLfloat green, GLfloat blue,
+	GLfloat aIntensity, GLfloat dIntensity,
+	GLfloat xDir, GLfloat yDir, GLfloat zDir) : Light(shadowWidth, shadowHeight, red, green, blue, aIntensity, dIntensity)
 {
-	direction = diffuseDir;
+	direction = glm::vec3(xDir, yDir, zDir);
+
 	lightProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 0.1f, 100.0f);
 }
 
-void DirectionalLight::UseLight(GLfloat ambientIntensityLocation, GLfloat ambientColorLocation, GLfloat diffuseIntensityLocation, GLfloat directionLocation)
+void DirectionalLight::UseLight(GLfloat ambientIntensityLocation, GLfloat ambientColourLocation,
+	GLfloat diffuseIntensityLocation, GLfloat directionLocation)
 {
-	glUniform3f(ambientColorLocation, color.x, color.y, color.z);
+	glUniform3f(ambientColourLocation, colour.x, colour.y, colour.z);
 	glUniform1f(ambientIntensityLocation, ambientIntensity);
 
 	glUniform3f(directionLocation, direction.x, direction.y, direction.z);
@@ -29,5 +32,4 @@ glm::mat4 DirectionalLight::CalculateLightTransform()
 
 DirectionalLight::~DirectionalLight()
 {
-
 }

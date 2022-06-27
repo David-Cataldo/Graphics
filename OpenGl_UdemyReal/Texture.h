@@ -1,11 +1,14 @@
 #pragma once
 
+#include <GL\glew.h>
+
 #include "CommonValues.h"
 
 class Texture
 {
 public:
-	Texture(const char* fileLoc = "");
+	Texture();
+	Texture(const char* fileLoc);
 
 	bool LoadTexture();
 	bool LoadTextureA();

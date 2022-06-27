@@ -1,16 +1,19 @@
 #pragma once
 
+#include <GL\glew.h>
+
 class Material
 {
 public:
-	Material(GLfloat sIntensity = 0.0f, GLfloat sShine = 0.0f);
+	Material();
+	Material(GLfloat sIntensity, GLfloat shine);
 
-	void UseMaterial(GLuint specularIntensityLocation, GLuint shineLocation);
+	void UseMaterial(GLuint specularIntensityLocation, GLuint shininessLocation);
 
 	~Material();
 
 private:
 	GLfloat specularIntensity;
-	GLfloat shine;
+	GLfloat shininess;
 };
 
