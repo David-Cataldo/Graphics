@@ -3,7 +3,13 @@
 
 #include "stb_image.h"
 
-const int MAX_POINT_LIGHTS = 3;
-const int MAX_SPOT_LIGHTS = 3;
+struct TexCoords
+{
+	unsigned int u;
+	unsigned int v;
+};
+
+#define COBBLESTONE TexCoords{1,0}
+#define SAND TexCoords{1,2}
 
 #endif
